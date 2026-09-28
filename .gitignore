@@ -1,0 +1,17 @@
+﻿/datalake/
+/quality/
+/docs/execucoes/
+/outputs/
+/metadata/
+/powerbi/
+*.pbix
+*.xlsx
+*.xlsm
+*.parquet
+*.zip
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.env.*
