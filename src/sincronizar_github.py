@@ -2,6 +2,7 @@
 
 Da raiz: python -u .\\src\\sincronizar_github.py .
 Nunca usa git add . nem inclui datalake/, quality/ ou docs/execucoes/.
+Inclui somente arquivos Markdown diretamente em docs/analise/.
 """
 from __future__ import annotations
 
@@ -57,6 +58,11 @@ def main() -> int:
             raise ValueError("Existem alterações já preparadas no Git; revise o índice antes de executar GH01")
         caminhos = [x for x in PUBLICOS if (raiz / x).is_file()]
         caminhos += [f"src/{nome}" for nome in SCRIPTS if (raiz / "src" / nome).is_file()]
+        pasta_analise = raiz / "docs" / "analise"
+        if pasta_analise.is_dir() and not pasta_analise.is_symlink():
+            caminhos += [arquivo.relative_to(raiz).as_posix()
+                         for arquivo in sorted(pasta_analise.glob("*.md"))
+                         if arquivo.is_file() and not arquivo.is_symlink()]
         if not caminhos:
             raise ValueError("Nenhum código ou documento público encontrado")
         # Adiciona somente a lista explícita; dados de origem nunca entram no índice.
@@ -66,7 +72,7 @@ def main() -> int:
             raise ValueError("Índice contém arquivo fora da lista pública")
         report["arquivos"] = preparados
         if preparados:
-            git(raiz, "commit", "-m", "Atualiza pipeline auditável de origem e Azure")
+            git(raiz, "commit", "-m", "Atualiza codigo e documentacao analitica")
         report["commit"] = git(raiz, "rev-parse", "HEAD")
         # Push sem force: divergência remota reprova a etapa e preserva ambos os históricos.
         git(raiz, "push", "origin", "main")
