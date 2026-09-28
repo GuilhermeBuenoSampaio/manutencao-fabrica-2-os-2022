@@ -8,7 +8,9 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import shutil
 import subprocess
+import os
 from datetime import datetime
 from pathlib import Path
 
@@ -16,7 +18,10 @@ CONTAINER = "manutencao-fabrica-2-os-2022"
 
 
 def comando(*args: str) -> dict:
-    process = subprocess.run(["az", *args, "--output", "json"], capture_output=True,
+    az = shutil.which("az.cmd") if os.name == "nt" else shutil.which("az")
+    if not az:
+        raise RuntimeError("Azure CLI não encontrado no PATH do Python. Execute 'Get-Command az' no mesmo PowerShell e verifique a instalação/PATH.")
+    process = subprocess.run([az, *args, "--output", "json"], capture_output=True,
                              text=True, encoding="utf-8", errors="replace")
     if process.returncode:
         raise RuntimeError(f"az {args[0]} {args[1]}: {process.stderr.strip()}")

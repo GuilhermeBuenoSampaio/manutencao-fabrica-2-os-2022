@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import subprocess
 import sys
 from datetime import datetime
@@ -79,6 +80,8 @@ def execucao_equivalente(raiz: Path, assinatura: str) -> tuple[Path, dict] | Non
 
 
 def main() -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(errors="replace")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("projeto", nargs="?", type=Path, default=Path("."))
     parser.add_argument("--force", action="store_true", help="repete entradas idênticas deliberadamente")
@@ -121,10 +124,12 @@ def main() -> int:
         comando = [sys.executable, "-u", str(script), str(raiz), *extras]
         print(f"[{codigo}] Iniciando {script.name}", flush=True)
         log = saida / f"{codigo}.log"
+        ambiente = os.environ.copy()
+        ambiente["PYTHONIOENCODING"] = "utf-8"
         with log.open("w", encoding="utf-8") as arquivo:
             processo = subprocess.Popen(
                 comando, cwd=raiz, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                text=True, encoding="utf-8", errors="replace", bufsize=1,
+                text=True, encoding="utf-8", errors="replace", bufsize=1, env=ambiente,
             )
             assert processo.stdout is not None
             for linha in processo.stdout:
