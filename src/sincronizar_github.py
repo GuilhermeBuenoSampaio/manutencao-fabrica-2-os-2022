@@ -19,7 +19,12 @@ SCRIPTS = ("conferir_anual_gerado.py", "contar_arquivos_landing_os.py",
            "provisionar_container_azure.py", "run_pipeline_azure.py",
            "run_pipeline_origem.py", "run_pipeline_projeto.py",
            "sincronizar_datalake_azure.py", "sincronizar_github.py",
+           "finalizar_projeto.py",
+           "gerar_gold_os.py",
            "validar_classificacao_setor_os.py")
+SQL = ("01_modelo_dimensional_os_2022.sql", "02_carregar_silver_sql_server.py",
+       "03_reconciliar_silver_sql_server.py", "04_kpis_os_2022.sql")
+PBIX = "Power BI/manutencao_fabrica_2_os_2022.pbix"
 ESPERADO = "GuilhermeBuenoSampaio/manutencao-fabrica-2-os-2022"
 
 
@@ -58,11 +63,14 @@ def main() -> int:
             raise ValueError("Existem alterações já preparadas no Git; revise o índice antes de executar GH01")
         caminhos = [x for x in PUBLICOS if (raiz / x).is_file()]
         caminhos += [f"src/{nome}" for nome in SCRIPTS if (raiz / "src" / nome).is_file()]
+        caminhos += [f"sql/{nome}" for nome in SQL if (raiz / "sql" / nome).is_file()]
         pasta_analise = raiz / "docs" / "analise"
         if pasta_analise.is_dir() and not pasta_analise.is_symlink():
             caminhos += [arquivo.relative_to(raiz).as_posix()
                          for arquivo in sorted(pasta_analise.glob("*.md"))
                          if arquivo.is_file() and not arquivo.is_symlink()]
+        if (raiz / PBIX).is_file() and not (raiz / PBIX).is_symlink():
+            caminhos.append(PBIX)
         if not caminhos:
             raise ValueError("Nenhum código ou documento público encontrado")
         # Adiciona somente a lista explícita; dados de origem nunca entram no índice.

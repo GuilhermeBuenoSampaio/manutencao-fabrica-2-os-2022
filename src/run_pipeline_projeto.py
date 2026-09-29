@@ -99,6 +99,11 @@ def main() -> int:
 
     salvar()
     try:
+        azure_script = src / "run_pipeline_azure.py"
+        if "enviar_silver_azure" in azure_script.read_text(encoding="utf-8"):
+            raise ValueError("run_pipeline_azure.py ainda contém enviar_silver_azure; substitua pelo arquivo corrigido")
+        if not (src / "sincronizar_datalake_azure.py").is_file():
+            raise ValueError("sincronizar_datalake_azure.py ausente em src/")
         codigo = executar(raiz, src / "run_pipeline_origem.py", [], docs / "origem.log")
         if codigo not in (0, 1):
             raise ValueError(f"Execução local interrompida com código inesperado: {codigo}")
@@ -114,6 +119,13 @@ def main() -> int:
         salvar()
         if not ok:
             raise ValueError(detalhe)
+        codigo = executar(raiz, src / "gerar_gold_os.py",
+                          ["--source-run", origem["run_id"]], docs / "gold.log")
+        report["etapas"].append({"etapa": "gold", "exit_code": codigo,
+                                 "status": "APROVADO" if codigo == 0 else "REPROVADO"})
+        salvar()
+        if codigo:
+            raise ValueError("Materialização Gold reprovada; consulte gold.log")
         codigo = executar(raiz, src / "run_pipeline_azure.py",
                           ["--account-name", args.account_name, "--container", args.container],
                           docs / "azure.log")
@@ -128,6 +140,15 @@ def main() -> int:
         salvar()
         if codigo:
             raise ValueError("Versionamento GitHub reprovado; consulte github.log")
+        codigo = executar(raiz, src / "finalizar_projeto.py",
+                          ["--pipeline-run-id", run_id,
+                           "--account-name", args.account_name,
+                           "--container", args.container], docs / "finalizador.log")
+        report["etapas"].append({"etapa": "finalizador", "exit_code": codigo,
+                                 "status": "APROVADO" if codigo == 0 else "REPROVADO"})
+        salvar()
+        if codigo:
+            raise ValueError("Finalização reprovada; consulte finalizador.log e a evidência FINAL01")
         report["status"] = "APROVADO"
     except (OSError, ValueError, RuntimeError) as exc:
         report["status"] = "REPROVADO"
