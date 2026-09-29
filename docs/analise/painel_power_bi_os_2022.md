@@ -2,7 +2,7 @@
 
 ## Escopo e fonte
 
-O arquivo do painel é `Power BI/manutencao_fabrica_2_os_2022.pbix`, na raiz do projeto. O Power BI consulta a visão `dw.vw_os_analitica` do banco SQL Server `[manutencao-fabrica-2-os-2022]`. A carga SQL foi reconciliada com uma única execução Silver: `datalake/02_silver/20260928_135101_841223/os_2022_silver.parquet` (AB04 aprovado; SHA-256 `42e43d5038a8b713c519440096109c40b41dc80698cd255c825bee92097a9879`). Pastas Silver de outras execuções representam versões históricas e não devem ser somadas à carga atual.
+O arquivo do painel é `powerbi/manutencao_fabrica_2_os_2022.pbix`, na raiz do projeto. O Power BI consulta a visão `dw.vw_os_analitica` do banco SQL Server `[manutencao-fabrica-2-os-2022]`. A carga SQL foi reconciliada com uma única execução Silver: `datalake/02_silver/20260928_135101_841223/os_2022_silver.parquet` (AB04 aprovado; SHA-256 `42e43d5038a8b713c519440096109c40b41dc80698cd255c825bee92097a9879`). Pastas Silver de outras execuções representam versões históricas e não devem ser somadas à carga atual.
 
 Grão: uma linha por `formulario_os`; 337 linhas e 337 O.S. distintas. Ano 2022, local F2. Os números abaixo correspondem à visualização sem filtros de setor ou outros recortes.
 
@@ -42,6 +42,6 @@ Existe apenas um ano e uma unidade nesta Silver. O painel não permite afirmar s
 1. Abrir o `.pbix` e atualizar os dados do SQL Server. O acesso ao servidor local depende da configuração da máquina que abre o relatório.
 2. Sem filtros, conferir 337 O.S. e R$ 449.367,51; conferir 93/241/3 por tipo e a soma dos respectivos valores.
 3. Conferir média R$ 1.333,43, mediana R$ 940,00 e Top 10 R$ 75.780,00. Ao aplicar o setor, verificar se os indicadores variam coerentemente com o recorte.
-4. Manter este documento em `docs/analise/` e o `.pbix` em `Power BI/`. Antes de publicar no GitHub, verificar se a rotina de sincronização inclui ambos os caminhos e se o `.pbix` não contém dados ou credenciais que o projeto não pretende expor.
+4. Manter este documento em `docs/analise/` e o `.pbix` em `powerbi/`. Antes de publicar no GitHub, verificar se a rotina de sincronização inclui ambos os caminhos e se o `.pbix` não contém dados ou credenciais que o projeto não pretende expor.
 
 Referência analítica detalhada: `docs/analise/EDA_Silver_OS_2022_20260928.md`.

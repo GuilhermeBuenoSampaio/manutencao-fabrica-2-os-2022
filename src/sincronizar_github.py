@@ -24,7 +24,7 @@ SCRIPTS = ("conferir_anual_gerado.py", "contar_arquivos_landing_os.py",
            "validar_classificacao_setor_os.py")
 SQL = ("01_modelo_dimensional_os_2022.sql", "02_carregar_silver_sql_server.py",
        "03_reconciliar_silver_sql_server.py", "04_kpis_os_2022.sql")
-PBIX = "Power BI/manutencao_fabrica_2_os_2022.pbix"
+PBIX = "powerbi/manutencao_fabrica_2_os_2022.pbix"
 ESPERADO = "GuilhermeBuenoSampaio/manutencao-fabrica-2-os-2022"
 
 
@@ -69,12 +69,15 @@ def main() -> int:
             caminhos += [arquivo.relative_to(raiz).as_posix()
                          for arquivo in sorted(pasta_analise.glob("*.md"))
                          if arquivo.is_file() and not arquivo.is_symlink()]
-        if (raiz / PBIX).is_file() and not (raiz / PBIX).is_symlink():
-            caminhos.append(PBIX)
+        if not (raiz / PBIX).is_file() or (raiz / PBIX).is_symlink():
+            raise ValueError(f"PBIX não encontrado no caminho esperado: {PBIX}")
+        caminhos.append(PBIX)
         if not caminhos:
             raise ValueError("Nenhum código ou documento público encontrado")
         # Adiciona somente a lista explícita; dados de origem nunca entram no índice.
-        git(raiz, "add", "--", *caminhos)
+        git(raiz, "add", "--", *(x for x in caminhos if x != PBIX))
+        # Exceção apenas para este PBIX, mesmo que powerbi/ esteja no .gitignore.
+        git(raiz, "add", "-f", "--", PBIX)
         preparados = git(raiz, "diff", "--cached", "--name-only").splitlines()
         if any(x not in caminhos for x in preparados):
             raise ValueError("Índice contém arquivo fora da lista pública")

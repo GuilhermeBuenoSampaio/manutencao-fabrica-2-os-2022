@@ -164,7 +164,7 @@ def main() -> int:
         panel = root / DOCS[2]
         if panel.is_file():
             content = panel.read_text(encoding="utf-8")
-            check("documentacao_painel", PBIX.casefold() in content.casefold() and "337" in content and
+            check("documentacao_painel", PBIX in content and "337" in content and
                   "449.367,51" in content and "75.780,00" in content and
                   "limites" in content.lower(),
                   "Caminho, KPIs e limitações documentados; não verifica medidas internas do PBIX")
@@ -173,8 +173,10 @@ def main() -> int:
         gh_ok = gh_ref is not None
         if gh_ok:
             paths = set(git(root, "ls-tree", "-r", "--name-only", "HEAD").splitlines())
-            gh_ok = all(rel in paths for rel in required)
-        check("github_commit", gh_ok, "HEAD da etapa GH01 contém código, SQL, documentação e PBIX")
+            missing = sorted(set(required) - paths)
+            gh_ok = not missing
+        check("github_commit", gh_ok, "Todos os arquivos exigidos presentes no commit" if gh_ok else
+              f"Ausentes no commit: {missing if gh_ref else 'evidência GH01 do HEAD não encontrada'}")
         report["origem_run_id"] = source_run
         report["evidencias"] = {"pipeline_origem": str(origin_path.relative_to(root)),
                                 "AB04": f"docs/execucoes/AB04/{source_run}/conclusao_AB04.json",
