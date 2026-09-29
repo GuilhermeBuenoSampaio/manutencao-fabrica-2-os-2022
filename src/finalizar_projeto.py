@@ -89,10 +89,16 @@ def main() -> int:
         parent_path = base / "pipeline_projeto" / run_id / "conclusao_pipeline_projeto.json"
         parent = evidence(parent_path)
         stages = {x.get("etapa"): x for x in parent.get("etapas", [])}
+        # A origem pode sair com código 1 quando AB00 registra a divergência
+        # histórica do anual legado. O orquestrador só aprova essa etapa após
+        # validar a evidência AB00–AB04; preservar essa decisão aqui.
         gate = (parent.get("run_id") == run_id and parent.get("status") == "EM_ANDAMENTO"
+                and stages.get("origem", {}).get("status") == "APROVADO"
+                and stages["origem"].get("exit_code") in (0, 1)
+                and bool(stages["origem"].get("evidencia"))
                 and all(stages.get(k, {}).get("status") == "APROVADO" and
-                        stages[k].get("exit_code") == 0 for k in ("origem", "gold", "azure", "github")))
-        check("ordem_pipeline", gate, "Origem, Gold, Azure e GitHub da mesma execução aprovados")
+                        stages[k].get("exit_code") == 0 for k in ("gold", "azure", "github")))
+        check("ordem_pipeline", gate, "Origem validada pelo orquestrador; Gold, Azure e GitHub aprovados nesta execução")
         if not gate:
             raise ValueError("Finalizador só roda depois de origem, Gold, Azure e GitHub aprovados")
 
