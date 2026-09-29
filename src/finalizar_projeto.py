@@ -15,7 +15,7 @@ from pathlib import Path
 
 
 SILVER = "os_2022_silver.parquet"
-PBIX = "Power BI/manutencao_fabrica_2_os_2022.pbix"
+PBIX = "powerbi/manutencao_fabrica_2_os_2022.pbix"
 DOCS = ("README.md", "docs/analise/EDA_Silver_OS_2022_20260928.md",
         "docs/analise/painel_power_bi_os_2022.md")
 SQL = ("sql/01_modelo_dimensional_os_2022.sql",
@@ -164,7 +164,7 @@ def main() -> int:
         panel = root / DOCS[2]
         if panel.is_file():
             content = panel.read_text(encoding="utf-8")
-            check("documentacao_painel", PBIX in content and "337" in content and
+            check("documentacao_painel", PBIX.casefold() in content.casefold() and "337" in content and
                   "449.367,51" in content and "75.780,00" in content and
                   "limites" in content.lower(),
                   "Caminho, KPIs e limitações documentados; não verifica medidas internas do PBIX")
