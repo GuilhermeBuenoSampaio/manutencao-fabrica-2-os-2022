@@ -1,12 +1,12 @@
 # Revisão — Manutenção Fábrica 2 (O.S. 2022)
 
-Revisão de um projeto de análise de ordens de serviço de 2022. O objetivo é reconstruir a base a partir dos formulários originais, documentar a qualidade dos dados e comparar os resultados da nova análise com as conclusões do estudo anterior. A execução analítica ocorre localmente; `datalake/` e `quality/` são sincronizados com o Azure, e o código e a documentação pública são versionados no GitHub. A modelagem em SQL Server e a apresentação no Power BI com Power Query e DAX fazem parte da próxima fase.
+Revisão de um projeto de análise de ordens de serviço de 2022. A base foi reconstruída a partir dos formulários originais, classificada por setor, reconciliada na Silver e na Gold, carregada em um modelo dimensional SQL Server e apresentada no Power BI. A execução analítica ocorre localmente; `datalake/` e `quality/` são sincronizados com o Azure, enquanto código, SQL, documentação pública e o PBIX são versionados no GitHub. A comparação aprofundada com as conclusões e a clusterização do estudo anterior permanece como trabalho analítico futuro.
 
 ## Perguntas de negócio
 
-- Como custos e quantidade de ordens de serviço variam por mês, equipamento, prestador, tipo e setor?
+- Como o valor registrado e a quantidade de ordens de serviço variam por mês, tipo e setor?
 - Quais gastos correspondem a manutenção, desenvolvimento e adequação?
-- As recomendações da análise anterior permanecem quando a origem e a clusterização são revisadas?
+- Quais O.S. concentram os maiores valores, e como os resultados revisados se comparam aos do estudo anterior?
 
 O custo financeiro da parada de produção não consta dos formulários. Assim, o valor registrado representa os serviços e itens disponíveis na fonte e não todo o impacto operacional de uma quebra.
 
@@ -25,9 +25,12 @@ A coluna `setor` foi classificada manualmente em `empanados`, `pão de queijo` o
 | AB02 | Anual gerado e documentos originais | Reconciliação por O.S. dos campos e valores de origem |
 | AB03 | Anual gerado e classificação manual | Verificação da nova coluna `setor` e preservação das demais colunas |
 | AB04 | Classificação aprovada na AB03 | `datalake/02_silver/<execução>/os_2022_silver.parquet` e documentação da Silver |
+| GO01 | Silver AB04 aprovada | `datalake/03_gold/<execução Silver>/kpis_mes_tipo_setor.parquet`, agregado por mês, tipo e setor |
 | AZ01 | Conta de armazenamento e contêiner configurados | Verificação do contêiner `manutencao-fabrica-2-os-2022` |
 | AZ02 | Pastas locais `datalake/` e `quality/` | Arquivos sincronizados com o Azure e conferidos por SHA-256 |
-| GH01 | Código e documentação pública | Commit e envio ao GitHub, sem versionar dados e evidências de execução |
+| SQL01 | Silver AB04 e modelo dimensional no SQL Server | Reconciliação de linhas, valores, chaves, agregados e campos da fato |
+| GH01 | Código, SQL, documentação pública e PBIX | Commit e envio ao GitHub, sem versionar Parquet, formulários e evidências de execução |
+| FINAL01 | Evidências e arquivos das etapas anteriores | Conferência final e relatório de aprovação/reprovação |
 
 Cada execução gera JSON e Markdown em `docs/execucoes/<etapa>/<execução>/`. Os identificadores de execução e hashes SHA-256 ligam as evidências às entradas sem sobrescrever resultados anteriores. O arquivo anual anterior não é substituído automaticamente pelo anual reconstruído.
 
@@ -35,11 +38,14 @@ Cada execução gera JSON e Markdown em `docs/execucoes/<etapa>/<execução>/`. 
 
 - AB01 e AB02: **337 O.S.** reconstruídas e reconciliadas com os documentos originais.
 - AB03: **337 classificações**, sendo 199 de empanados, 89 de pão de queijo e 49 de geral; nenhuma divergência estrutural detectada.
-- AB04: Silver Parquet aprovada na execução `20260928_013744_604732`, com **337 linhas**, **337 chaves distintas** e **R$ 449.367,51** de valor registrado. O relatório registra leitura de conferência após a gravação. Outra execução aprovada foi preservada em pasta própria; os números de cada versão devem ser confirmados na respectiva evidência AB04.
+- AB04: a execução Silver usada pela EDA, pelo SQL e pela Gold é `20260928_135101_841223`. São **337 linhas**, **337 chaves distintas** e **R$ 449.367,51** de valor registrado; SHA-256 do Parquet: `42e43d5038a8b713c519440096109c40b41dc80698cd255c825bee92097a9879`. Outras execuções permanecem históricas e não entram nessa soma.
 - AB00: a execução anterior apontou **340 linhas** no anual preexistente contra 337 documentos válidos da origem (12 versus 10 em maio; 64 versus 63 em julho). Esse resultado documenta uma divergência do arquivo legado e não invalida, por si, a reconciliação do anual reconstruído. A comparação e o destino do legado devem ser decididos explicitamente.
 - AZ01: após as tentativas iniciais reprovadas, a verificação do contêiner foi **aprovada**.
-- AZ02: a sincronização de `datalake/` e `quality/` foi **aprovada**, com **358/358 arquivos enviados ou reutilizados e verificados** no contêiner `manutencao-fabrica-2-os-2022`, na conta `stcustomeranalyticsgb01`.
-- A execução completa de `run_pipeline_projeto.py` foi informada como **aprovada**, incluindo origem, Azure e GitHub. O relatório `docs/execucoes/pipeline_projeto/<execução>/conclusao_pipeline_projeto.json` identifica as evidências de cada etapa.
+- GO01: Gold agregada por mês, tipo e setor em `datalake/03_gold/20260928_135101_841223/kpis_mes_tipo_setor.parquet`, reconciliada com 337 O.S. e R$ 449.367,51.
+- AZ02: a sincronização de `datalake/` (incluindo a Gold) e `quality/` foi aprovada no contêiner `manutencao-fabrica-2-os-2022`, conta `stcustomeranalyticsgb01`. O total de arquivos da execução final deve ser lido na respectiva evidência AZ02; o resultado anterior de 358 arquivos precedeu a criação da Gold.
+- SQL Server: banco `[manutencao-fabrica-2-os-2022]`, fato com uma O.S. por linha, cinco dimensões e quatro views analíticas. A reconciliação Silver × SQL (SQL01) foi aprovada para a Silver indicada.
+- Power BI: painel `powerbi/manutencao_fabrica_2_os_2022.pbix`, ligado à visão `dw.vw_os_analitica`; os cartões e gráficos sem filtros foram conferidos com os valores da EDA.
+- GitHub e FINAL01: após corrigir o caminho `powerbi/` e incluir explicitamente o PBIX ignorado, o usuário informou que a execução completa de `run_pipeline_projeto.py` ficou **aprovada**. Os identificadores de execução e commit estão nos JSONs GH01 e FINAL01 locais, não informados neste README.
 
 Esses números descrevem execuções identificadas; novas execuções devem ser conferidas pelos próprios relatórios, não presumidas iguais.
 
@@ -50,21 +56,22 @@ src/                  scripts das etapas e orquestrador
 datalake/00_landing/  formulários originais
 datalake/01_bronze_raw/ anual preexistente e tabelas mensais
 datalake/02_silver/  Parquet tratado por execução
-datalake/03_gold/    saídas Gold locais, quando produzidas
+datalake/03_gold/    Gold agregada por mês, tipo e setor
 quality/              anual reconstruído e classificação manual
 docs/execucoes/       evidências JSON, Markdown e logs por etapa
-sql/                  futura modelagem e cargas para SQL Server
-powerbi/              futura apresentação analítica
+docs/analise/         EDA e relatórios técnico e executivo
+sql/                  modelo dimensional, carga, reconciliação e views
+powerbi/              painel manutencao_fabrica_2_os_2022.pbix
 ```
 
-Dados de origem, classificações, relatórios de execução e Parquet permanecem fora do GitHub via `.gitignore`. O repositório guarda código e documentação revisada sem registros operacionais.
+Dados de origem, classificações, relatórios de execução e Parquet permanecem fora do GitHub via `.gitignore`. O repositório guarda código, SQL, documentação analítica e o PBIX explicitamente autorizado em `powerbi/`, sem incluir os dados operacionais brutos.
 
 ## Execução local
 
 Use Python 3.12 e instale as bibliotecas necessárias no mesmo interpretador que executará os scripts:
 
 ```powershell
-python -m pip install openpyxl pyarrow
+python -m pip install openpyxl pyarrow pyodbc
 ```
 
 Na raiz do projeto, para executar apenas AB00–AB04:
@@ -75,37 +82,41 @@ python -u .\src\run_pipeline_origem.py .
 
 O orquestrador cria uma nova pasta por execução e exige documentação para considerar uma etapa concluída. AB00 registra a diferença do anual legado; o orquestrador completo a distingue da validação da base reconstruída. Consulte o JSON de cada etapa para separar essas situações.
 
-Para executar origem, Azure e GitHub na sequência, use:
+Para executar origem, Gold, Azure, GitHub e finalização na sequência, use:
 
 ```powershell
 python -u .\src\run_pipeline_projeto.py . --account-name stcustomeranalyticsgb01
 ```
 
-Para reproduzir isoladamente a Silver já documentada, use `gerar_silver_os.py` após uma AB03 aprovada para os mesmos bytes das planilhas. Para a configuração do Azure e os comandos de GitHub, consulte [GITHUB_E_AZURE.md](GITHUB_E_AZURE.md).
+Para reproduzir isoladamente a Silver já documentada, use `gerar_silver_os.py` após uma AB03 aprovada para os mesmos bytes das planilhas. A carga e a reconciliação no SQL Server têm scripts em `sql/`; a evidência SQL01 aprovada para a mesma Silver é requisito do finalizador. Para a configuração do Azure e os comandos de GitHub, consulte [GITHUB_E_AZURE.md](GITHUB_E_AZURE.md).
 
-## Próxima fase: análise exploratória e modelo dimensional
+## Resultados da análise
 
-A análise usará **uma execução Silver aprovada de cada vez**. As pastas de execução preservam versões históricas do Parquet; seus registros não devem ser somados entre versões.
+A análise usa **uma execução Silver aprovada por vez**. As pastas de execução preservam versões históricas do Parquet; registros de versões diferentes não devem ser somados.
 
-1. Definir as perguntas de negócio e os KPIs candidatos.
-2. Explorar a Silver aprovada: esquema, tipos, nulos, categorias, distribuição mensal, valores e extremos.
-3. Confirmar fórmulas, denominadores e limitações dos KPIs com base na EDA.
-4. Definir a granularidade da fato e construir dimensões e cargas no SQL Server sem multiplicar O.S.
-5. Reconciliar contagens e valores entre Silver, modelo dimensional e indicadores antes de publicar a análise.
+| Indicador sem filtros | Resultado |
+| --- | ---: |
+| O.S. registradas | 337 |
+| Valor total registrado | R$ 449.367,51 |
+| Manutenção | 93 O.S.; R$ 123.705,00 |
+| Desenvolvimento | 241 O.S.; R$ 321.692,51 |
+| Adequação | 3 O.S.; R$ 3.970,00 |
+| Média e mediana por O.S. | R$ 1.333,43; R$ 940,00 |
+| Dez O.S. de maior valor | R$ 75.780,00 (16,86% do total) |
 
-### Perguntas e KPIs candidatos
+Julho teve o maior número de O.S. (63) e setembro o maior valor registrado (R$ 79.060,00). Empanados reuniu 199 O.S. e R$ 260.082,51; pão de queijo, 89 e R$ 132.780,00; geral, 49 e R$ 56.505,00. Esses totais não são taxas de falha: faltam denominadores como horas de operação e produção por setor.
 
-| Pergunta | KPI candidato | Regra inicial |
-| --- | --- | --- |
-| Como as O.S. se distribuem ao longo de 2022? | O.S. por mês | Contagem distinta de `formulario_os` por `ano` e `mes_numero`. |
-| Quais setores concentram as ocorrências? | O.S. por setor e participação percentual | Contagem distinta por `setor` dividida pelo total de O.S. da execução. |
-| Quais áreas ou equipamentos demandam mais serviços? | O.S. por área/equipamento | Contagem distinta por `area_equipamento`, após conferir a consistência dos nomes. |
-| Onde se concentra o valor registrado? | Valor por mês, setor e área/equipamento | Soma de `valor_total_brl` em cada agrupamento. |
-| Há concentração em poucas áreas ou equipamentos? | Participação acumulada | Ordenar por contagem de O.S. ou valor e calcular o percentual acumulado, identificando a métrica usada. |
-| Como variam tipos e prestadores solicitados? | O.S. e valor por tipo/prestador | Contagem distinta e soma de `valor_total_brl` por `tipo` ou `prestador_solicitado`. |
+A apresentação no Power BI inclui cartões por tipo, média, mediana, séries mensais, valores por setor, segmentação e tabela das dez O.S. de maior valor. A view `dw.vw_os_analitica` mantém uma linha por O.S. As demais views são `dw.vw_kpis_gerais`, `dw.vw_kpis_mes` e `dw.vw_kpis_tipo_setor`.
 
-Essas fórmulas são candidatas; a EDA determinará quais indicadores são sustentados pela fonte. `valor_total_brl` é o **valor registrado na O.S.**, não o custo operacional total. A Silver não possui datas e horários confiáveis de início e fim nem o custo da parada de produção; portanto, ela não sustenta tempo médio de reparo, disponibilidade ou impacto financeiro total de uma quebra. A classificação do setor foi manual e deve ser interpretada com essa limitação.
+## Documentação e limites
 
-Depois da reconciliação, serão preparados Power Query, medidas DAX e o dashboard no Power BI. A análise revisada será comparada à anterior, inclusive quanto a variáveis, extremos, clusterização e recomendações. O finalizador deverá verificar arquivos, evidências, Azure, SQL Server, Power BI e documentação antes do encerramento.
+- [EDA da Silver](docs/analise/EDA_Silver_OS_2022_20260928.md)
+- [Indicadores e painel Power BI](docs/analise/painel_power_bi_os_2022.md)
+- [Relatório técnico](docs/analise/relatorio_tecnico_os_2022.md)
+- [Relatório executivo](docs/analise/relatorio_executivo_os_2022.md)
 
-A avaliação da clusterização deve primeiro reproduzir o método original e verificar seu código e escalas reais; nenhuma mudança de conclusão é antecipada aqui.
+`valor_total_brl` é o **valor registrado na O.S.**, não o custo operacional completo. `prestador_solicitado` não comprova a execução. A Silver não contém horas de operação, datas confiáveis de início e fim de reparo ou perdas por parada; não sustenta MTBF, MTTR, disponibilidade, custo de parada ou inferência causal. A classificação de setor foi manual. O campo `area_equipamento` mistura descrições de área e ativo e precisa de padronização antes de um ranking confiável de equipamentos.
+
+A comparação detalhada das conclusões revisadas com o estudo anterior, inclusive a metodologia de clusterização original, **ainda não foi realizada** nesta revisão. É uma análise futura; nenhuma mudança de conclusão sobre clusters é antecipada.
+
+A aprovação FINAL01 confere evidências, hashes, artefatos locais e arquivos do commit, mas **não abre o PBIX para recalcular DAX**. Para manter o painel, confira a conexão com o SQL Server e os números sem filtros após cada atualização de dados.
