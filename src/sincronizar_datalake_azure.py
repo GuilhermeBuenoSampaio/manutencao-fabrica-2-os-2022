@@ -20,6 +20,12 @@ from pathlib import Path
 
 CONTAINER = "manutencao-fabrica-2-os-2022"
 ROOTS = ("datalake", "quality")
+# Arquivos deste aprofundamento não integram o inventário da EDA.
+def exclusivo_manutencao(path: str) -> bool:
+    return any(part.casefold() in ("analise_manutencao_2022", "manutencao_2022",
+                                  "bi_analise_manutencao_2022")
+               for part in Path(path).parts)
+
 BUILD = "AZ02_PYTHON_DIRETO_20260928_V2"
 
 
@@ -56,9 +62,13 @@ def inventario(raiz: Path) -> list[dict]:
     files = []
     for root in ROOTS:
         base = raiz / root
+        if base.is_symlink():
+            raise ValueError(f"Link simbólico não permitido: {base}")
         if not base.is_dir():
             raise ValueError(f"Pasta obrigatória ausente: {base}")
         for item in base.rglob("*"):
+            if exclusivo_manutencao(item.relative_to(raiz).as_posix()):
+                continue
             if item.is_symlink():
                 raise ValueError(f"Link simbólico não permitido: {item}")
             if item.is_file() and not item.name.startswith("~$"):

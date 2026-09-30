@@ -3,6 +3,8 @@
 Da raiz: python -u .\\src\\sincronizar_github.py .
 Nunca usa git add . nem inclui datalake/, quality/ ou docs/execucoes/.
 Inclui somente arquivos Markdown diretamente em docs/analise/.
+Não seleciona sql/analise_manutencao_2022/, docs/analise/manutencao_2022/
+nem powerbi/bi_analise_manutencao_2022/. Índice prévio não vazio reprova a etapa.
 """
 from __future__ import annotations
 

@@ -120,3 +120,23 @@ A apresentação no Power BI inclui cartões por tipo, média, mediana, séries 
 A comparação detalhada das conclusões revisadas com o estudo anterior, inclusive a metodologia de clusterização original, **ainda não foi realizada** nesta revisão. É uma análise futura; nenhuma mudança de conclusão sobre clusters é antecipada.
 
 A aprovação FINAL01 confere evidências, hashes, artefatos locais e arquivos do commit, mas **não abre o PBIX para recalcular DAX**. Para manter o painel, confira a conexão com o SQL Server e os números sem filtros após cada atualização de dados.
+
+
+## Análise 02 — aprofundamento da manutenção
+
+Análise independente da EDA geral: 93 O.S. e R$ 123.705,00. Examina recorrência mensal, distribuição de valor, casos contextualizados e natureza parcial das intervenções. Dashboard e totais conferidos pelo responsável em 29/09/2026.
+
+- [Índice e instruções](docs/analise/manutencao_2022/README.md)
+- [Relatório técnico](docs/analise/manutencao_2022/relatorio_tecnico_manutencao_2022.md)
+- [Relatório executivo](docs/analise/manutencao_2022/relatorio_executivo_manutencao_2022.md)
+
+O PBIX está em `powerbi/bi_analise_manutencao_2022/analise_manutencao_2022.pbix`. Os scripts SQL estão em `sql/analise_manutencao_2022/`. A pipeline da EDA não seleciona essas pastas. O README da raiz é compartilhado.
+
+```powershell
+python -u .\src\run_pipeline_manutencao_2022.py . --simular
+python -u .\src\run_pipeline_manutencao_2022.py .
+```
+
+A publicação usa o mesmo contêiner Azure, em `analises/analise_manutencao_2022/<run_id>/`, sem sobrescrever versões. Inclui SQL, documentação, PBIX e scripts de publicação. GitHub recebe somente a lista explícita. O finalizador é acionado por último e confere arquivos, hashes e commit remoto; não executa SQL nem recalcula DAX. A evidência desta análise fica em `docs/execucoes/analise_manutencao_2022/`, separada de FINAL01.
+
+Classificação confirmada: 13 de 93 O.S. (13,98%); 9 corretivas e 4 preventivas. Há 1 provável e 79 não avaliadas. Não inferir taxa real de falha, criticidade apenas pelo valor ou perdas de produção sem dados de parada.
